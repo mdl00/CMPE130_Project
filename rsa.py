@@ -1,23 +1,20 @@
-import math
- 
 message = int(input("Enter the message to be encrypted: ")) 
  
 p = 11
-q = 7
-e = 3
+q = 13
+e = 7
 n = p*q
-phi = (p-1)*(q-1)
+z = (p-1)*(q-1)
  
 def encrypt(m):
-    c = int(math.pow(m,e) % n)
+    c = int((m**e) % n)
     return c
 
 def decrypt(c):
     d = 1
-    while (d*e % 60 is not 1 and d < 100000):
+    while (int((d*e) % z) is not 1 and d < 100000):
         d = d + 1
-    print("d is calculated to be: ", d);
-    m = int(math.pow(c,d) % n)
+    m = int((c**d) % n)
     return m
  
 print("Original Message is: ", message)
