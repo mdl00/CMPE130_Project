@@ -1,7 +1,7 @@
 import random
-
-# Pre generated primes
-first_primes_list = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
+import math
+# List of low primes. Source: https://en.wikipedia.org/wiki/List_of_prime_numbers
+low_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                      31, 37, 41, 43, 47, 53, 59, 61, 67,
                      71, 73, 79, 83, 89, 97, 101, 103,
                      107, 109, 113, 127, 131, 137, 139,
@@ -9,7 +9,9 @@ first_primes_list = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                      181, 191, 193, 197, 199, 211, 223,
                      227, 229, 233, 239, 241, 251, 257,
                      263, 269, 271, 277, 281, 283, 293,
-                     307, 311, 313, 317, 331, 337, 347, 349]
+                     307, 311, 313, 317, 331, 337, 347, 349,
+                     353, 359, 367, 373, 379, 383, 389,	397,
+                     401, 409]
  
 def nBitRandom(n):
     return random.randrange(2**(n-1)+1, 2**n - 1)
@@ -23,7 +25,7 @@ def getLowLevelPrime(n):
  
          # Test divisibility by pre-generated
          # primes
-        for divisor in first_primes_list:
+        for divisor in low_primes:
             if pc % divisor == 0 and divisor**2 <= pc:
                 break
         else: return pc
@@ -60,13 +62,13 @@ def generatePrime(n):
          continue
      else:
          print(n, "bit prime is: \n", prime_candidate)
-         break
+         return n
 
 def generatePubKey(p, q):
     n = p*q
     z = (p-1)*(q-1)
     e = nBitRandom(2048)
-    while (e >= n or gcd(e, z) != 1)
+    while (e >= n or extendedEuclideanAlgorithm(e, z) != 1):
          e = nBitRandom(2048)
     return e
  
@@ -74,36 +76,46 @@ def calculatePrivKey(p, q, e):
     n = p*q
     z = (p-1)*(q-1)
     d = nBitRandom(2048)
-    while (int((d*e) % z) is not 1 or d >= n):
+    while (int((d*e) % z) != 1 or d >= n):
         d = nBitRandom(2048)
     return d
- 
-def encrypt(m, e):
+
+def encrypt(m, p, q, e):
+    n = p * q
     c = int((m**e) % n)
     return c
 
-def decrypt(c, d):
+def decrypt(c, d, p, q):
+    n = p * q
     m = int((c**d) % n)
     return m
 
-def gcd(a, b):
-    if(b == 0):
-        return a
-    else:
-        return gcd(b, a % b)
-     
+#ax + by = gcd(a , b)
+#also known as bezout's theorem
+#in our case we want to use this algorithim to find the gcd because it 
+def extendedEuclideanAlgorithm(e, z):
+    x,y, u,v = 0,1, 1,0
+    while e != 0:
+        q, r = z//e, z%e
+        m, n = x - u * q, y - v * q
+        z,e, x,y, u,v = e,r, u,v, m,n
+        gcd = z
+    return gcd, x, y
 
+def egcd(a, b):
+    x,y, u,v = 0,1, 1,0
+    while a != 0:
+        q, r = b//a, b%a
+        m, n = x-u*q, y-v*q
+        b,a, x,y, u,v = a,r, u,v, m,n
+        gcd = b
+    return gcd, x, y
 p = generatePrime(2048)
 q = generatePrime(2048)
-e = generatePubKey(p, q)
-d = calculatePrivKey(p, q, e)
+e = 65537
+z = (q-1)*(p-1)
+gcd, a, b = extendedEuclideanAlgorithm(e, z)
+d = a
+#d = calculatePrivKey(p, q, e)
 print("Public key is ", e)
 print("Private key is ", d)
-     
-#message = int(input("Enter the message to be encrypted: ")) 
-
-#print("Original Message is: ", message)
-#c = encrypt(message)
-#print("Encrypted message is: ", c)
-#m = decrypt(c);
-#print("Decrypted message is: ", m)
