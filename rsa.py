@@ -1,5 +1,5 @@
 import random
-import math
+import timeit
 # List of low primes. Source: https://en.wikipedia.org/wiki/List_of_prime_numbers
 low_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                      31, 37, 41, 43, 47, 53, 59, 61, 67,
@@ -61,7 +61,6 @@ def generatePrime(n):
      if not isMillerRabinPassed(prime_candidate):
          continue
      else:
-         print(n, "bit prime is: \n", prime_candidate)
          return n
 
 def generatePubKey(p, q):
@@ -80,13 +79,11 @@ def calculatePrivKey(p, q, e):
         d = nBitRandom(2048)
     return d
 
-def encrypt(m, p, q, e):
-    n = p * q
+def encrypt(m, n, e):
     c = int((m**e) % n)
     return c
 
-def decrypt(c, d, p, q):
-    n = p * q
+def decrypt(c, n, d):
     m = int((c**d) % n)
     return m
 
@@ -102,20 +99,15 @@ def extendedEuclideanAlgorithm(e, z):
         gcd = z
     return gcd, x, y
 
-def egcd(a, b):
-    x,y, u,v = 0,1, 1,0
-    while a != 0:
-        q, r = b//a, b%a
-        m, n = x-u*q, y-v*q
-        b,a, x,y, u,v = a,r, u,v, m,n
-        gcd = b
-    return gcd, x, y
 p = generatePrime(2048)
 q = generatePrime(2048)
 e = 65537
 z = (q-1)*(p-1)
 gcd, a, b = extendedEuclideanAlgorithm(e, z)
 d = a
+d = d % z
+if(d < 0):
+    d += z
 #d = calculatePrivKey(p, q, e)
 print("Public key is ", e)
 print("Private key is ", d)
