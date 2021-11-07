@@ -13,33 +13,30 @@ low_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                      353, 359, 367, 373, 379, 383, 389,	397,
                      401, 409]
  
-def nBitRandom(n):
+def n_bit_random(n):
     return random.randrange(2**(n-1)+1, 2**n - 1)
  
-def getLowLevelPrime(n):
-    '''Generate a prime candidate divisible
-    by first primes'''
+def get_low_prime(n):
     while True:
-        # Obtain a random number
-        pc = nBitRandom(n)
+        candidate = n_bit_random(n)
  
          # Test divisibility by pre-generated
          # primes
         for divisor in low_primes:
-            if pc % divisor == 0 and divisor**2 <= pc:
+            if candidate % divisor == 0 and divisor**2 <= candidate:
                 break
-        else: return pc
+        else: 
+            return candidate
  
-def isMillerRabinPassed(mrc):
-    '''Run 20 iterations of Rabin Miller Primality test'''
+def is_rabin_miller(mrc):
     maxDivisionsByTwo = 0
     ec = mrc-1
     while ec % 2 == 0:
         ec >>= 1
         maxDivisionsByTwo += 1
     assert(2**maxDivisionsByTwo * ec == mrc-1)
- 
-    def trialComposite(round_tester):
+
+    def trail_composite(round_tester):
         if pow(round_tester, ec, mrc) == 1:
             return False
         for i in range(maxDivisionsByTwo):
@@ -51,46 +48,32 @@ def isMillerRabinPassed(mrc):
     numberOfRabinTrials = 20
     for i in range(numberOfRabinTrials):
         round_tester = random.randrange(2, mrc)
-        if trialComposite(round_tester):
+        if trail_composite(round_tester):
             return False
     return True
  
-def generatePrime(n):
+def generate_prime(n):
  while True:
-     prime_candidate = getLowLevelPrime(n)
-     if not isMillerRabinPassed(prime_candidate):
+     prime_candidate = get_low_prime(n)
+     if not is_rabin_miller(prime_candidate):
          continue
      else:
-         return n
-
-def generatePubKey(p, q):
-    n = p*q
-    z = (p-1)*(q-1)
-    e = nBitRandom(2048)
-    while (e >= n or extendedEuclideanAlgorithm(e, z) != 1):
-         e = nBitRandom(2048)
-    return e
- 
-def calculatePrivKey(p, q, e):
-    n = p*q
-    z = (p-1)*(q-1)
-    d = nBitRandom(2048)
-    while (int((d*e) % z) != 1 or d >= n):
-        d = nBitRandom(2048)
-    return d
+         return prime_candidate
 
 def encrypt(m, n, e):
     c = int((m**e) % n)
     return c
 
 def decrypt(c, n, d):
-    m = int((c**d) % n)
+    m = ((c**d) % n)
     return m
+
+
 
 #ax + by = gcd(a , b)
 #also known as bezout's theorem
 #in our case we want to use this algorithim to find the gcd because it 
-def extendedEuclideanAlgorithm(e, z):
+def extended_euclidean_algorithm(e, z):
     x,y, u,v = 0,1, 1,0
     while e != 0:
         q, r = z//e, z%e
@@ -99,15 +82,20 @@ def extendedEuclideanAlgorithm(e, z):
         gcd = z
     return gcd, x, y
 
-p = generatePrime(2048)
-q = generatePrime(2048)
+
 e = 65537
-z = (q-1)*(p-1)
-gcd, a, b = extendedEuclideanAlgorithm(e, z)
-d = a
-d = d % z
-if(d < 0):
-    d += z
-#d = calculatePrivKey(p, q, e)
-print("Public key is ", e)
-print("Private key is ", d)
+#a predefined constant. 65537 or 3 is the standard for e
+def get_public_key():
+    return e
+
+#p and q are calculated during the creation of the server and can be changed when needed. (session key)
+def create_private_key(p, q):
+    
+    e = get_public_key()
+    z = (q-1)*(p-1)
+    gcd, x, b = extended_euclidean_algorithm(e, z)
+    d = x
+    d = d % z
+    if(d < 0):
+        d += z
+    return d
