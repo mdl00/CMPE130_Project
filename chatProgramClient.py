@@ -3,8 +3,10 @@ import errno
 import sys
 import timeit
 
+
 HEADER_LENGTH = 10
 PRIVATEKEY = 10
+PUBLICKEY = 10
 
 IP = "127.0.0.1"
 PORT = 1234
@@ -27,13 +29,22 @@ username = my_username.encode('utf-8')
 username_header = f"{len(username):<{HEADER_LENGTH}}".encode('utf-8')
 client_socket.send(username_header + username)
 
+
 #PRIV KEY HANDOUT
 KEYHEADER = client_socket.recv(PRIVATEKEY)
 KEYLENGTH = int(KEYHEADER.decode('utf-8').strip())
 KEY = client_socket.recv(KEYLENGTH).decode('utf-8')
+KEY = int(KEY)
 print(KEYHEADER)    #JUST DEBUGGING
 print(KEY)          #JUST DEBUGGING
 #note: it got to work, just needs to be able to encrypt and send using this key now
+
+#PUBLIC KEY HANDOUT
+PUBKEY = client_socket.recv(PUBLICKEY).decode('utf-8')
+PUBKEY = int(PUBKEY)
+print("Public key is")
+print(PUBKEY)
+
 while True:
 
     # Wait for user to input a message
