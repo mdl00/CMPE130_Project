@@ -2,9 +2,13 @@ import socket
 import select
 import rsa
 
-PUBLICKEY = rsa.e
-PRIVATEKEY = rsa.d
-
+#CREATE KEYS
+p = rsa.generate_prime(2048)
+q = rsa.generate_prime(2048)
+n = p * q
+PUBLICKEY = rsa.get_public_key()
+PRIVATEKEY = rsa.create_private_key(p,q)
+#length of messages
 HEADER_LENGTH = 10
 
 IP = "127.0.0.1"
@@ -104,8 +108,11 @@ while True:
             # HELP!!!!!!!!!!!!!!!!!!!!! Need to send key over to connected client. However, the send function returns an byte of b'' even though the privKey is b'(some value for key)'
             privKey = str(PRIVATEKEY).encode('utf-8')
             keyHeader = f"{len(privKey):<{HEADER_LENGTH}}".encode('utf-8')
+            pubKey = str(PUBLICKEY).encode('utf-8')
             print(privKey)
             client_socket.send(keyHeader + privKey)
+            keyHeader = f"{len(pubKey):<{HEADER_LENGTH}}".encode('utf-8')
+            client_socket.send(pubKey)
             #!!!!!!!!!!!!!!!!!!!!!!!!!!!
             #note it works now.
 
