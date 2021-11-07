@@ -1,5 +1,6 @@
 import random
 import timeit
+import math
 # List of low primes. Source: https://en.wikipedia.org/wiki/List_of_prime_numbers
 low_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                      31, 37, 41, 43, 47, 53, 59, 61, 67,
@@ -14,7 +15,7 @@ low_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
                      401, 409]
  
 def n_bit_random(n):
-    return random.randrange(2**(n-1)+1, 2**n - 1)
+    return random.randrange(Math.pow(2, n-1) + 1, Math.pow(2, n) - 1)
  
 def get_low_prime(n):
     while True:
@@ -34,13 +35,13 @@ def is_rabin_miller(mrc):
     while ec % 2 == 0:
         ec >>= 1
         maxDivisionsByTwo += 1
-    assert(2**maxDivisionsByTwo * ec == mrc-1)
+    assert(Math.pow(2, maxDivisionsByTwo) * ec == mrc-1)
 
     def trail_composite(round_tester):
         if pow(round_tester, ec, mrc) == 1:
             return False
         for i in range(maxDivisionsByTwo):
-            if pow(round_tester, 2**i * ec, mrc) == mrc-1:
+            if pow(round_tester, Math.pow(2, i) * ec, mrc) == mrc-1:
                 return False
         return True
  
@@ -61,11 +62,11 @@ def generate_prime(n):
          return prime_candidate
 
 def encrypt(m, n, e):
-    c = int((m**e) % n)
+    c = int(Math.pow(m, e) % n)
     return c
 
 def decrypt(c, n, d):
-    m = ((c**d) % n)
+    m = (Math.pow(c, d) % n)
     return m
 
 
