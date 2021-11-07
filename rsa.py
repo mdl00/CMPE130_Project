@@ -82,16 +82,20 @@ def decrypt(c, n, d):
 
 
 
-#ax + by = gcd(a , b)
-#also known as bezout's theorem
-#in our case we want to use this algorithim to find the gcd because it 
+#Computing ax + by = gcd(a , b), also known as bezout's theorem
+#Returns the GCD of e and z
 def extended_euclidean_algorithm(e, z):
     x,y, u,v = 0,1, 1,0
     while e != 0:
+        #we obtain the quotient q by performing integer division, and the remainder r
         q, r = z//e, z%e
+        #we calculate the new values of u and v, temporarily stored in m and n
+        #the new values are obtained by subtracting the quotient * the new value from the old value
         m, n = x - u * q, y - v * q
+        #swapping the new values into the intended variables
         z,e, x,y, u,v = e,r, u,v, m,n
         gcd = z
+    #returns gcd(a, b), x, and y
     return gcd, x, y
 
 
