@@ -1,7 +1,7 @@
 import math
 import rsa
-p = rsa.generate_prime(512)
-q = rsa.generate_prime(512)
+p = rsa.generate_prime(1024)
+q = rsa.generate_prime(1024)
 n = p * q
 e = rsa.get_public_key()
 key = rsa.create_private_key(p,q)
@@ -22,13 +22,17 @@ print("key is ")
 print(key)
 print("n is ")
 print(n)
-whatever = (5 ** e) % n
-print(whatever)
-testDecrypt = ((whatever ** key) % n)
+#whatever = (testEncrypt ** e) % n
+#print("whatever is ")
+#print(whatever)
+testDecrypt = pow(testEncrypt, key, n)
 print("decrypted value ")
 print(testDecrypt)
 length2 = len(str(testDecrypt))
 
+result2 = testDecrypt.to_bytes(length2, "big")
+output = result2.decode('utf-8')
+print(output)
 #result2 = testEncrypt.to_bytes(length, byteorder="big")
 #output = result2.decode('ISO-8859-1')
 #result2 = rsa.decrypt(result2,n,key)
