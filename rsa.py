@@ -1,68 +1,80 @@
 import random
 import timeit
-# List of low primes. Source: https://en.wikipedia.org/wiki/List_of_prime_numbers
-low_primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29,
-                     31, 37, 41, 43, 47, 53, 59, 61, 67,
-                     71, 73, 79, 83, 89, 97, 101, 103,
-                     107, 109, 113, 127, 131, 137, 139,
-                     149, 151, 157, 163, 167, 173, 179,
-                     181, 191, 193, 197, 199, 211, 223,
-                     227, 229, 233, 239, 241, 251, 257,
-                     263, 269, 271, 277, 281, 283, 293,
-                     307, 311, 313, 317, 331, 337, 347, 349,
-                     353, 359, 367, 373, 379, 383, 389,	397,
-                     401, 409]
- 
-#returns a random number generated fom 2 ^(n-1) + 1 and 2 ^ n - 1
-def n_bit_random(n):
-    return random.randrange(2**(n-1)+1, 2**n - 1)
- 
-def get_low_prime(n):
-    while True:
-        candidate = n_bit_random(n)
- 
-         # Test divisibility by pre-generated
-         # primes
-        for divisor in low_primes:
-            if candidate % divisor == 0 and divisor**2 <= candidate:
-                break
-        else: 
-            return candidate
- 
-def is_rabin_miller(mrc):
-    maxDivisionsByTwo = 0
-    ec = mrc-1
-    while ec % 2 == 0:
-        ec >>= 1
-        maxDivisionsByTwo += 1
-    assert(2**maxDivisionsByTwo * ec == mrc-1)
 
-    def trail_composite(round_tester):
-        if pow(round_tester, ec, mrc) == 1:
-            return False
-        for i in range(maxDivisionsByTwo):
-            if pow(round_tester, 2**i * ec, mrc) == mrc-1:
-                return False
+# Compute x^y mod p
+def power(x, y, p):
+    res = 1      # Initialize result
+    # Update x if x >= p
+    x = x % p      
+    while y > 0:
+        if y & 1:   #If y have the last bit of 1 (is odd number)
+            res = (res*x) % p   
+
+        y >>= 1       #bit shift right, or y/2
+        x = x*x % p     
+
+    return res
+
+# Use Miller Rabin Algorithm to check if number is prime
+def is_rabin_miller(d, n):
+    a = random.randint(2, n-2)  # Pick a random number in range [2, n-2]
+    x = power(a, d, n)          # Compute a^d%n and store in x
+
+    if x == 1 or x == n - 1:    
         return True
- 
-    # Set number of trials here
-    numberOfRabinTrials = 20
-    for i in range(numberOfRabinTrials):
-        round_tester = random.randrange(2, mrc)
-        if trail_composite(round_tester):
+
+    #Recompute quotient and remainder
+    while d != n - 1:
+        x = x*x % n
+        d *= 2
+
+        if x == 1:
             return False
+        if x == n - 1:
+            return True
+
+    return False
+
+# because Miller is a probability-based algorithm
+# people suggest checking a number is prime with this algorithm about 40 times
+# check a number is prime
+def is_prime(n, k=40):
+    # Handle base cases
+    if n < 2:
+        return False      
+    elif n == 2 or n == 3:
+        return True
+    elif n % 2 == 0:            
+        return False       
+
+    d = n - 1
+    #Find r such that n = 2^d * r + 1 for some r >= 1
+    while (d % 2 == 0):
+        d = int(d // 2)     #Get the whole part of d/2
+
+    # Miller test
+    for i in range(k):
+        if not is_rabin_miller(d, n):
+            return False
+
     return True
- 
+
+#Obtain a large random number
+def generate_large_number(bit_len):
+    p = random.getrandbits(bit_len) # generate random bits
+    #Apply a mask to set MSB and LSB to 1
+    p |= (1 << bit_len - 1) | 1
+    return p
+
 #generates a prime number given a certain number of bits
 #It will create a random value relative to the given bits and run that value through a primality test
 #returns a value that passes through the rabin miller primality test
-def generate_prime(n):
- while True:                                    #loop forever until a prime number is found
-     prime_candidate = get_low_prime(n)         #Random Value
-     if not is_rabin_miller(prime_candidate):     
-         continue
-     else:
-         return prime_candidate                 #If its prime, return the prime value
+def generate_prime(bit_len=1024):
+    n = 4   # initial phase
+    #Generate a large number until it is prime
+    while not is_prime(n, 40):
+        n = generate_large_number(bit_len)
+    return n
 
 
 #encrypts a message given the message represented in an int value, n (p*q), and the public key
