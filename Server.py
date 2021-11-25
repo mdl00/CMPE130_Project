@@ -3,19 +3,12 @@ import select
 import rsa
 import time
 #CREATE KEYS
-start_time = time.perf_counter()            #this is for keeping track of runtime
 p = rsa.generate_prime(1024)
 q = rsa.generate_prime(1024) 
 #This is rsa 2048
 n = p * q
-
 PUBLIC_KEY = rsa.get_public_key()            #predefined constant
 PRIVATE_KEY = rsa.create_private_key(p,q)    #create private key given p and q
-
-end_time = time.perf_counter()
-
-total_time = (end_time - start_time)
-
 #length of messages
 HEADER_LENGTH = 10
 
@@ -37,9 +30,10 @@ server_socket.listen()
 #List of sockets
 sockets_list = [server_socket]
 
-#List of connected clients - socket as a key, user header and name as data
+#List of clients in the server
 clients = {}
 
+#messages for the server when the server is created
 print('New server created')
 print('New private key created')
 print(f'Listening for connections on {IP}:{PORT}...')
@@ -84,47 +78,46 @@ while True:
             #returns the client socket and its address
             client_socket, client_address = server_socket.accept()
 
-            # Client should send his name right away, receive it
+            #Recieve client name
             user = receive_message(client_socket)
 
-            # If False - client disconnected before he sent his name
+            # client disconnected before he sent his name
             if user is False:
                 continue
 
-            # Add accepted socket to select.select() list
+            # Add accepted socket list
             sockets_list.append(client_socket)
 
             # Also save username and username header
             clients[client_socket] = user
 
-            print('NEW CLIENT CONNECTED: {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))
-            # HELP!!!!!!!!!!!!!!!!!!!!! Need to send key over to connected client. However, the send function returns an byte of b'' even though the privKey is b'(some value for key)'
-            privKey = str(PRIVATE_KEY).encode('utf-8')
-            keyHeader = f"{len(privKey):<{HEADER_LENGTH}}".encode('utf-8')
+            print('NEW CLIENT CONNECTED: {}:{}, username: {}'.format(*client_address, user['data'].decode('utf-8')))    #new client is connected, prompt message to server
+            
+            privKey = str(PRIVATE_KEY).encode('utf-8')                          #since new client is connected, we send them the keys   #prepares key in bytes to send to client
+            keyHeader = f"{len(privKey):<{HEADER_LENGTH}}".encode('utf-8')      #key length
 
-            client_socket.send(keyHeader + privKey)
+            client_socket.send(keyHeader + privKey)                             #send key length + key
 
-            pubKey = str(PUBLIC_KEY).encode('utf-8')
-            keyHeader = f"{len(pubKey):<{HEADER_LENGTH}}".encode('utf-8')
-            client_socket.send(keyHeader + pubKey)
+            pubKey = str(PUBLIC_KEY).encode('utf-8')                            #public key preparation
+            keyHeader = f"{len(pubKey):<{HEADER_LENGTH}}".encode('utf-8')       #key length
+            client_socket.send(keyHeader + pubKey)                              #send key length + key
 
-            modN = str(n).encode('utf-8')
+            modN = str(n).encode('utf-8')                                       #sends the mod n section, preparation
             n_header = f"{len(modN):<{HEADER_LENGTH}}".encode('utf-8')
             client_socket.send(n_header + modN)
-            #!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            #note it works now.
+            
 
         # Else existing socket is sending a message
         else:
 
-            # Receive message
+            # Receive message given a length
             message = receive_message(notified_socket)
 
-            # If False, client disconnected, cleanup
+            # If False, client has disconnected from the socket
             if message is False:
                 print('{} DISCONNECTED'.format(clients[notified_socket]['data'].decode('utf-8')))
 
-                # Remove from list for socket.socket()
+                # Remove from client list
                 sockets_list.remove(notified_socket)
 
                 # Remove from our list of users
@@ -140,11 +133,10 @@ while True:
             # Iterate over connected clients and broadcast message
             for client_socket in clients:
 
-                # But don't sent it to sender
+                #make sure we dont send the socket to themselves
                 if client_socket != notified_socket:
 
-                    # Send user and message (both with their headers)
-                    # We are reusing here message header sent by sender, and saved username header send by user when he connected
+                    # We are reusing message header sent by sender, and saved username header send by user when he connected
                     client_socket.send(user['header'] + user['data'] + message['header'] + message['data'])
 
     # It's not really necessary to have this, but will handle some socket exceptions just in case
